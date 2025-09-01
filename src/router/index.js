@@ -143,8 +143,8 @@ export const dynamicRoutes = [
         meta: { title: '客户详情', icon: 'detail' }
       },
       {
-        path: 'progess',
-        component: () => import('@/views/custom/progess/index.vue'),
+        path: 'progress',
+        component: () => import('@/views/custom/progress/index.vue'),
         name: 'CustomerProgress',
         meta: { title: '客户进度', icon: 'progress' }
       }
