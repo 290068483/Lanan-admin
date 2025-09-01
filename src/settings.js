@@ -17,7 +17,7 @@ export default {
   /**
    * 是否显示顶部导航
    */
-  topNav: false,
+  topNav: true,
 
   /**
    * 是否显示 tagsView
@@ -54,4 +54,3 @@ export default {
    */
   footerContent: 'Copyright © 2018-2025 RuoYi. All Rights Reserved.'
 }
-

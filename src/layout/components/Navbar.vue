@@ -1,8 +1,8 @@
 <template>
   <div class="navbar">
     <hamburger id="hamburger-container" :is-active="appStore.sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" />
+    <top-nav v-if="showTopMenu" id="topmenu-container" class="topmenu-container" />
     <breadcrumb v-if="!settingsStore.topNav" id="breadcrumb-container" class="breadcrumb-container" />
-    <top-nav v-if="settingsStore.topNav" id="topmenu-container" class="topmenu-container" />
 
     <div class="right-menu">
       <template v-if="appStore.device !== 'mobile'">
@@ -71,6 +71,12 @@ const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 
+// 控制是否显示顶部菜单
+const showTopMenu = computed(() => {
+  // 默认显示顶部菜单，除非在设置中明确关闭
+  return true
+})
+
 function toggleSideBar() {
   appStore.toggleSideBar()
 }
@@ -138,6 +144,8 @@ function toggleTheme() {
   .topmenu-container {
     position: absolute;
     left: 50px;
+    height: 50px;
+    width: calc(100% - 300px); /* 为右侧用户信息留出空间 */
   }
 
   .errLog-container {

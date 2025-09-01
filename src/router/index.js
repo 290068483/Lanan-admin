@@ -64,7 +64,7 @@ export const constantRoutes = [
     children: [
       {
         path: '/index',
-        component: () => import('@/views/index'),
+        component: () => import('@/views/home'),
         name: 'Index',
         meta: { title: '首页', icon: 'dashboard', affix: true }
       }
@@ -127,6 +127,26 @@ export const dynamicRoutes = [
         component: () => import('@/views/system/dict/data'),
         name: 'Data',
         meta: { title: '字典数据', activeMenu: '/system/dict' }
+      }
+    ]
+  },
+  {
+    path: '/custom',
+    component: Layout,
+    redirect: '/custom/details',
+    meta: { title: '客户管理', icon: 'customer' },
+    children: [
+      {
+        path: 'details',
+        component: () => import('@/views/custom/details/index.vue'),
+        name: 'CustomerDetail',
+        meta: { title: '客户详情', icon: 'detail' }
+      },
+      {
+        path: 'progess',
+        component: () => import('@/views/custom/progess/index.vue'),
+        name: 'CustomerProgress',
+        meta: { title: '客户进度', icon: 'progress' }
       }
     ]
   },

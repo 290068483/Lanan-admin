@@ -6,10 +6,43 @@
     :ellipsis="false"
   >
     <template v-for="(item, index) in topMenus">
-      <el-menu-item :style="{'--theme': theme}" :index="item.path" :key="index" v-if="index < visibleNumber">
+      <!-- 有子菜单的项显示为下拉菜单 -->
+      <el-sub-menu 
+        v-if="item.children && item.children.length > 0 && index < visibleNumber"
+        :index="item.path" 
+        :key="'sub-' + index"
+        :style="{'--theme': theme}"
+      >
+        <template #title>
+          <svg-icon
+            v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
+            :icon-class="item.meta.icon"/>
+          {{ item.meta.title }}
+        </template>
+        <template v-for="(child, childIndex) in item.children">
+          <el-menu-item 
+            v-if="!child.hidden"
+            :index="child.path" 
+            :key="'child-' + index + '-' + childIndex"
+          >
+            <svg-icon
+              v-if="child.meta && child.meta.icon && child.meta.icon !== '#'"
+              :icon-class="child.meta.icon"/>
+            {{ child.meta.title }}
+          </el-menu-item>
+        </template>
+      </el-sub-menu>
+      
+      <!-- 无子菜单的项显示为普通菜单项 -->
+      <el-menu-item 
+        v-else-if="index < visibleNumber"
+        :style="{'--theme': theme}" 
+        :index="item.path" 
+        :key="'item-' + index"
+      >
         <svg-icon
-        v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
-        :icon-class="item.meta.icon"/>
+          v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
+          :icon-class="item.meta.icon"/>
         {{ item.meta.title }}
       </el-menu-item>
     </template>
@@ -18,14 +51,42 @@
     <el-sub-menu :style="{'--theme': theme}" index="more" v-if="topMenus.length > visibleNumber">
       <template #title>更多菜单</template>
       <template v-for="(item, index) in topMenus">
-        <el-menu-item
-          :index="item.path"
-          :key="index"
-          v-if="index >= visibleNumber">
-        <svg-icon
-          v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
-          :icon-class="item.meta.icon"/>
-        {{ item.meta.title }}
+        <!-- 有子菜单的项显示为下拉菜单 -->
+        <el-sub-menu 
+          v-if="item.children && item.children.length > 0 && index >= visibleNumber"
+          :index="item.path" 
+          :key="'more-sub-' + index"
+        >
+          <template #title>
+            <svg-icon
+              v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
+              :icon-class="item.meta.icon"/>
+            {{ item.meta.title }}
+          </template>
+          <template v-for="(child, childIndex) in item.children">
+            <el-menu-item 
+              v-if="!child.hidden"
+              :index="child.path" 
+              :key="'more-child-' + index + '-' + childIndex"
+            >
+              <svg-icon
+                v-if="child.meta && child.meta.icon && child.meta.icon !== '#'"
+                :icon-class="child.meta.icon"/>
+              {{ child.meta.title }}
+            </el-menu-item>
+          </template>
+        </el-sub-menu>
+        
+        <!-- 无子菜单的项显示为普通菜单项 -->
+        <el-menu-item 
+          v-else-if="index >= visibleNumber"
+          :index="item.path" 
+          :key="'more-item-' + index"
+        >
+          <svg-icon
+            v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
+            :icon-class="item.meta.icon"/>
+          {{ item.meta.title }}
         </el-menu-item>
       </template>
     </el-sub-menu>
@@ -199,19 +260,4 @@ onMounted(() => {
 .topmenu-container.el-menu--horizontal>.el-menu-item:not(.is-disabled):focus, .topmenu-container.el-menu--horizontal>.el-menu-item:not(.is-disabled):hover, .topmenu-container.el-menu--horizontal>.el-submenu .el-submenu__title:hover {
   background-color: #ffffff;
 }
-
-/* 图标右间距 */
-.topmenu-container .svg-icon {
-  margin-right: 4px;
-}
-
-/* topmenu more arrow */
-.topmenu-container .el-sub-menu .el-sub-menu__icon-arrow {
-  position: static;
-  vertical-align: middle;
-  margin-left: 8px;
-  margin-top: 0px;
-}
-
-
 </style>

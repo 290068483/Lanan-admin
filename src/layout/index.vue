@@ -1,7 +1,6 @@
 <template>
   <div :class="classObj" class="app-wrapper" :style="{ '--current-color': theme }">
     <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside"/>
-    <sidebar v-if="!sidebar.hide" class="sidebar-container" />
     <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide }" class="main-container">
       <div :class="{ 'fixed-header': fixedHeader }">
         <navbar @setLayout="setLayout" />
@@ -15,7 +14,6 @@
 
 <script setup>
 import { useWindowSize } from '@vueuse/core'
-import Sidebar from './components/Sidebar/index.vue'
 import { AppMain, Navbar, Settings, TagsView } from './components'
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'
@@ -94,16 +92,8 @@ function setLayout() {
   top: 0;
   right: 0;
   z-index: 9;
-  width: calc(100% - #{vars.$base-sidebar-width});
-  transition: width 0.28s;
-}
-
-.hideSidebar .fixed-header {
-  width: calc(100% - 54px);
-}
-
-.sidebarHide .fixed-header {
   width: 100%;
+  transition: width 0.28s;
 }
 
 .mobile .fixed-header {
