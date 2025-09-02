@@ -4,7 +4,9 @@
     <div v-if="hasNetworkError" class="network-warning">
       <div class="warning-content">
         <i class="el-icon-warning warning-icon"></i>
-        <p class="warning-text">🔍 网络连接不稳定，部分数据可能不是最新的，但页面功能正常</p>
+        <p class="warning-text">
+          🔍 网络连接不稳定，部分数据可能不是最新的，但页面功能正常
+        </p>
       </div>
     </div>
 
@@ -12,47 +14,66 @@
     <div class="main-content">
       <!-- 用户信息和欢迎区域 -->
       <div class="user-info-area">
-        <div class="user-details">
-          <div class="user-avatar">
-            {{ userInfo.avatar ? "" : userInfo.name ? userInfo.name.charAt(0) : "U" }}
-          </div>
-          <div class="user-text">
-            <div class="user-info-grid">
-              <div class="info-label">姓名：</div>
-              <div class="info-value">{{ userInfo.name }}</div>
+        <el-row
+          :gutter="20"
+          justify="center"
+          align="middle"
+          style="width: 100%"
+        >
+          <el-col :md="4" :sm="24">
+            <div class="user-details">
+              <div class="user-avatar">
+                {{
+                  userInfo.avatar
+                    ? ""
+                    : userInfo.name
+                    ? userInfo.name.charAt(0)
+                    : "U"
+                }}
+              </div>
+              <div class="user-text">
+                <div class="user-info-grid">
+                  <div class="info-label">姓名：</div>
+                  <div class="info-value">{{ userInfo.name }}</div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div class="welcome-section">
-          <h1 class="welcome-title">欢迎进入九素工作台</h1>
-          <div class="date-info">
-            <p class="date-text">
-              {{ getDate }} <span class="time-text">{{ getTime }}</span>
-            </p>
-            <p class="lunar-text">{{ getLunarDate }} {{ getWeekday }}</p>
-          </div>
-        </div>
-        <div class="todo-reminder" @click="handleTodoReminderClick">
-          <i class="el-icon-time reminder-icon"></i>
-          请及时录入工作进度
-        </div>
+          </el-col>
+          <el-col :md="16" :sm="24" >
+            <div class="welcome-section">
+              <h1 class="welcome-title">欢迎进入九素工作台</h1>
+              <div class="date-info">
+                <p class="date-text">
+                  {{ getDate }} <span class="time-text">{{ getTime }}</span>
+                </p>
+                <p class="lunar-text">{{ getLunarDate }} {{ getWeekday }}</p>
+              </div>
+            </div>
+          </el-col>
+          <el-col :sm="24" :md="4" clas="last-col-right">
+            <div class="todo-reminder " @click="handleTodoReminderClick">
+              <i class="el-icon-time reminder-icon"></i>
+              请及时录入工作进度
+            </div>
+          </el-col>
+        </el-row>
       </div>
 
       <!-- 通知和待办区域 -->
       <div class="notification-area">
-        <el-carousel :interval="4000" type="card" height="130px" class="notification-carousel">
+        <el-carousel
+          :interval="4000"
+          type="card"
+          height="130px"
+          class="notification-carousel"
+        >
           <el-carousel-item
             v-for="notification in notifications"
             :key="notification.id"
-            class="notification-item-container">
-            <div
-              class="notification-item"
-              :class="notification.type">
-              <i
-                class="notification-icon"
-                :class="notification.iconColor"
-                ></i>
+            class="notification-item-container"
+          >
+            <div class="notification-item" :class="notification.type">
+              <i class="notification-icon" :class="notification.iconColor"></i>
               <div class="notification-content">
                 <p class="notification-title">
                   <span class="title-bold">{{ notification.title }}：</span>
@@ -73,12 +94,17 @@
           v-for="(card, index) in quickInfoCards"
           :key="index"
           class="info-card"
-          :class="card.bgColor">
+          :class="card.bgColor"
+        >
           <i class="el-icon-document card-icon"></i>
-          <h3 class="card-title">今日待处理事件<span class="card-unit">条</span></h3>
+          <h3 class="card-title">
+            今日待处理事件<span class="card-unit">条</span>
+          </h3>
         </div>
         <div class="button-container">
-          <el-button type="primary" size="medium" @click="handleButtonClick">录入新进度</el-button>
+          <el-button type="primary" size="medium" @click="handleButtonClick"
+            >录入新进度</el-button
+          >
         </div>
       </div>
 
@@ -87,7 +113,9 @@
         <!-- 待处理事件表格 -->
         <div class="table-container">
           <div class="table-header">
-            <h3 class="table-title">{{ data1.title || "本人待处理的所有事项" }}</h3>
+            <h3 class="table-title">
+              {{ data1.title || "本人待处理的所有事项" }}
+            </h3>
           </div>
           <!-- 表格 -->
           <div class="table-wrapper">
@@ -98,10 +126,26 @@
               border
               :default-sort="{ prop: 'id', order: 'descending' }"
               @sort-change="sortBy"
-              class="data-table">
-              <el-table-column prop="id" label="ID" width="80" align="center"></el-table-column>
-              <el-table-column prop="name" label="姓名" width="120" align="center"></el-table-column>
-              <el-table-column prop="count" label="数量" width="100" align="center"></el-table-column>
+              class="data-table"
+            >
+              <el-table-column
+                prop="id"
+                label="ID"
+                width="80"
+                align="center"
+              ></el-table-column>
+              <el-table-column
+                prop="name"
+                label="姓名"
+                width="120"
+                align="center"
+              ></el-table-column>
+              <el-table-column
+                prop="count"
+                label="数量"
+                width="100"
+                align="center"
+              ></el-table-column>
               <el-table-column prop="details" label="详情"></el-table-column>
             </el-table>
           </div>
@@ -110,7 +154,9 @@
         <!-- 与本人关联事项表格 -->
         <div class="table-container">
           <div class="table-header">
-            <h3 class="table-title">{{ data2.title || "与本人关联的所有事项" }}</h3>
+            <h3 class="table-title">
+              {{ data2.title || "与本人关联的所有事项" }}
+            </h3>
           </div>
           <!-- 表格 -->
           <div class="table-wrapper">
@@ -121,10 +167,26 @@
               border
               :default-sort="{ prop: 'id', order: 'descending' }"
               @sort-change="sortBy"
-              class="data-table">
-              <el-table-column prop="id" label="ID" width="80" align="center"></el-table-column>
-              <el-table-column prop="name" label="姓名" width="120" align="center"></el-table-column>
-              <el-table-column prop="count" label="数量" width="100" align="center"></el-table-column>
+              class="data-table"
+            >
+              <el-table-column
+                prop="id"
+                label="ID"
+                width="80"
+                align="center"
+              ></el-table-column>
+              <el-table-column
+                prop="name"
+                label="姓名"
+                width="120"
+                align="center"
+              ></el-table-column>
+              <el-table-column
+                prop="count"
+                label="数量"
+                width="100"
+                align="center"
+              ></el-table-column>
               <el-table-column prop="details" label="详情"></el-table-column>
             </el-table>
           </div>
@@ -135,13 +197,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue"
-import { ElMessage } from "element-plus"
-import useUserStore from "@/store/modules/user"
-import { parseTime } from "@/utils/ruoyi"
+import { ref, onMounted, computed } from "vue";
+import { ElMessage } from "element-plus";
+import useUserStore from "@/store/modules/user";
+import { parseTime } from "@/utils/ruoyi";
 
 // 组件状态管理
-const hasNetworkError = ref(false)
+const hasNetworkError = ref(false);
 const notifications = ref([
   {
     id: 1,
@@ -150,7 +212,7 @@ const notifications = ref([
     time: "2023-06-01 09:30",
     type: "notification-info",
     iconColor: "icon-info",
-    iconPath: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    iconPath: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
   },
   {
     id: 2,
@@ -159,12 +221,13 @@ const notifications = ref([
     time: "2023-06-01 10:15",
     type: "notification-warning",
     iconColor: "icon-warning",
-    iconPath: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-  }
-])
+    iconPath:
+      "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
+  },
+]);
 
 // 初始化状态管理实例
-const userStore = useUserStore()
+const userStore = useUserStore();
 
 // 组件挂载后初始化逻辑
 onMounted(async () => {
@@ -172,74 +235,74 @@ onMounted(async () => {
     // 有Token时尝试获取用户信息，失败则提示网络问题
     if (userStore.token) {
       try {
-        await userStore.getInfo()
-        console.log("用户信息获取成功:", userStore.$state)
+        await userStore.getInfo();
+        console.log("用户信息获取成功:", userStore.$state);
       } catch (error) {
-        console.warn("🔍 获取用户信息失败，使用本地数据:", error)
-        hasNetworkError.value = true
+        console.warn("🔍 获取用户信息失败，使用本地数据:", error);
+        hasNetworkError.value = true;
       }
     }
   } catch (error) {
-    console.error("🚨 初始化失败:", error)
-    hasNetworkError.value = true
+    console.error("🚨 初始化失败:", error);
+    hasNetworkError.value = true;
   }
-})
+});
 
 // 计算属性：用户信息（从状态管理获取，无数据时显示默认值）
 const userInfo = computed(() => {
-  const userDetail = userStore.$state
+  const userDetail = userStore.$state;
   return {
     name: userDetail.nickName || userDetail.name || "未设置",
     position: "未设置",
     department: "未设置",
-    avatar: userDetail.avatar || ""
-  }
-})
+    avatar: userDetail.avatar || "",
+  };
+});
 
 // 计算属性：日期、时间、农历、星期（使用parseTime生成）
-const getDate = computed(() => parseTime(new Date(), "{y}-{m}-{d}"))
-const getLunarDate = computed(() => "农历日期")
-const getWeekday = computed(() => parseTime(new Date(), "星期{a}"))
-const getTime = computed(() => parseTime(new Date(), "{h}:{i}:{s}"))
+const getDate = computed(() => parseTime(new Date(), "{y}-{m}-{d}"));
+const getLunarDate = computed(() => "农历日期");
+const getWeekday = computed(() => parseTime(new Date(), "星期{a}"));
+const getTime = computed(() => parseTime(new Date(), "{h}:{i}:{s}"));
 
 // 表格数据
 const data1 = ref({
   title: "本人待处理的所有事项",
   data: [
     { id: 1, name: "示例任务1", count: "任务描述1", details: "2023-03-24" },
-    { id: 2, name: "示例任务2", count: "任务描述2", details: "详细信息" }
-  ]
-})
+    { id: 2, name: "示例任务2", count: "任务描述2", details: "详细信息" },
+  ],
+});
 
 const data2 = ref({
   title: "与本人关联的所有事项",
   data: [
     { id: 1, name: "关联任务1", count: "关联描述1", details: "2023-03-24" },
-    { id: 2, name: "关联任务2", count: "关联描述2", details: "详细信息" }
-  ]
-})
+    { id: 2, name: "关联任务2", count: "关联描述2", details: "详细信息" },
+  ],
+});
 
 // 快捷信息卡片数据
 const quickInfoCards = ref([
   { bgColor: "card-blue" },
   { bgColor: "card-green" },
-  { bgColor: "card-yellow" }
-])
+  { bgColor: "card-yellow" },
+]);
 
 // 处理按钮点击事件
 const handleButtonClick = () => {
-  ElMessage.info("录入新进度功能待实现")
-}
+  ElMessage.info("录入新进度功能待实现");
+};
 
 // 处理待办提醒点击事件
 const handleTodoReminderClick = () => {
-  ElMessage.info("请及时录入工作进度")
-}
+  ElMessage.info("请及时录入工作进度");
+};
 
 // 表格排序处理
 const sortBy = (column) => {
-  console.log("排序字段:", column)
-}
+  console.log("排序字段:", column);
+};
 </script>
 
 <style scoped>
@@ -247,7 +310,8 @@ const sortBy = (column) => {
   background-color: #f5f7fa;
   min-height: calc(100vh - 84px);
   width: 100%;
-  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
+    Arial, sans-serif;
 }
 
 .network-warning {
@@ -267,7 +331,10 @@ const sortBy = (column) => {
   margin-right: 8px;
   font-size: 20px;
 }
-
+.last-col-right{
+    flex: 1;
+    margin-left: auto !important;
+}
 .warning-text {
   color: #92400e;
   font-size: 14px;
@@ -332,6 +399,7 @@ const sortBy = (column) => {
   font-size: 20px;
   font-weight: bold;
   margin: 0 0 8px 0;
+  text-align: center;
 }
 
 .date-info {
@@ -368,6 +436,7 @@ const sortBy = (column) => {
   font-weight: 500;
   display: flex;
   align-items: center;
+  justify-content: right;
 }
 
 .todo-reminder:hover {
@@ -403,7 +472,8 @@ const sortBy = (column) => {
 }
 
 .notification-item:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
   transform: translateY(-1px);
 }
 
@@ -475,7 +545,8 @@ const sortBy = (column) => {
 }
 
 .info-card:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -4px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
@@ -530,7 +601,8 @@ const sortBy = (column) => {
 }
 
 .table-container:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
 .table-header {
@@ -569,18 +641,18 @@ const sortBy = (column) => {
   .user-details {
     min-width: 100%;
   }
-  
+
   .welcome-section {
     text-align: center;
     margin-top: 16px;
   }
-  
+
   .date-info {
     flex-direction: column;
     gap: 8px;
     padding-right: 0 !important;
   }
-  
+
   .quick-info {
     justify-content: center;
   }

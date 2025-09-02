@@ -134,19 +134,45 @@ export const dynamicRoutes = [
     path: '/custom',
     component: Layout,
     redirect: '/custom/details',
-    meta: { title: '客户管理', icon: 'customer' },
+    meta: { title: '客户管理', icon: 'user' },
     children: [
       {
         path: 'details',
         component: () => import('@/views/custom/details/index.vue'),
         name: 'CustomerDetail',
-        meta: { title: '客户详情', icon: 'detail' }
+        meta: { title: '客户详情', icon: 'documentation' }
       },
       {
         path: 'progress',
         component: () => import('@/views/custom/progress/index.vue'),
         name: 'CustomerProgress',
-        meta: { title: '客户进度', icon: 'progress' }
+        meta: { title: '客户进度', icon: 'chart' }
+      },
+      {
+        path: 'shipping',
+        name: 'CustomerShipping',
+        meta: { title: '出货管理', icon: 'shopping' },
+        redirect: '/custom/shipping/overview',
+        children: [
+          {
+            path: 'overview',
+            component: () => import('@/views/shipping-issues/ShippingOverview.vue'),
+            name: 'ShippingOverview',
+            meta: { title: '出货总览', icon: 'documentation' }
+          },
+          {
+            path: 'details',
+            component: () => import('@/views/shipping-issues/ShippingDetails.vue'),
+            name: 'ShippingDetails',
+            meta: { title: '出货明细', icon: 'list' }
+          },
+          {
+            path: 'issues',
+            component: () => import('@/views/shipping-issues/IssueDetails.vue'),
+            name: 'ShippingIssues',
+            meta: { title: '问题明细', icon: 'bug' }
+          }
+        ]
       }
     ]
   },
