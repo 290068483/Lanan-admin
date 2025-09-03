@@ -187,13 +187,26 @@ const { queryParams, preview } = toRefs(data)
 
 onActivated(() => {
   const time = route.query.t
+  // 优化：只有当时间戳参数存在且不同时才重新加载数据
   if (time != null && time != uniqueId.value) {
     uniqueId.value = time
-    queryParams.value.pageNum = Number(route.query.pageNum)
-    dateRange.value = []
-    proxy.resetForm("queryForm")
-    getList()
+    // 确保分页参数正确设置，如果没有传递分页参数则使用默认值
+    queryParams.value.pageNum = route.query.pageNum ? Number(route.query.pageNum) : 1
+    queryParams.value.pageSize = route.query.pageSize ? Number(route.query.pageSize) : 10
+    
+    // 只有当有分页参数变化时才重新加载数据
+    if (route.query.pageNum || route.query.pageSize) {
+      dateRange.value = []
+      proxy.resetForm("queryRef")
+      getList()
+    }
   }
+  // 如果没有时间戳参数，但有分页参数，也要确保分页参数正确设置
+  else if (route.query.pageNum || route.query.pageSize) {
+    queryParams.value.pageNum = route.query.pageNum ? Number(route.query.pageNum) : queryParams.value.pageNum
+    queryParams.value.pageSize = route.query.pageSize ? Number(route.query.pageSize) : queryParams.value.pageSize
+  }
+  // 如果没有时间戳参数，不重新加载数据
 })
 
 /** 查询表集合 */
@@ -289,7 +302,11 @@ function handleSortChange(column, prop, order) {
 function handleEditTable(row) {
   const tableId = row.tableId || ids.value[0]
   const tableName = row.tableName || tableNames.value[0]
-  const params = { pageNum: queryParams.value.pageNum }
+  // 修复：确保传递完整的分页参数，如果没有则使用默认值
+  const params = { 
+    pageNum: queryParams.value.pageNum || 1,
+    pageSize: queryParams.value.pageSize || 10
+  }
   proxy.$tab.openPage("修改[" + tableName + "]生成配置", '/tool/gen-edit/index/' + tableId, params)
 }
 

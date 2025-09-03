@@ -127,6 +127,7 @@ import { optionselect as getDictOptionselect } from "@/api/system/dict/type"
 import basicInfoForm from "./basicInfoForm"
 import genInfoForm from "./genInfoForm"
 import Sortable from 'sortablejs'
+import { nextTick } from 'vue'
 
 const route = useRoute()
 const { proxy } = getCurrentInstance()
@@ -153,10 +154,58 @@ function submitForm() {
         treeParentCode: info.value.treeParentCode,
         parentMenuId: info.value.parentMenuId
       }
+      
+      // 设置subTableType字段
+      genTable.subTableType = info.value.subTableType || 1; // 默认为1(单子表模式)
+      
+      // 处理子表配置
+      const genInfoRef = proxy.$refs.genInfo
+      if (genInfoRef && typeof genInfoRef.getSubTableConfigs === 'function') {
+        const subTableConfigs = genInfoRef.getSubTableConfigs()
+        
+        // 检查配置模式
+        const isMultiMode = subTableConfigs && subTableConfigs.length > 0
+        
+        if (isMultiMode) {
+          // 多子表模式
+          let tableNames = [];
+          let fkNames = [];
+          subTableConfigs.forEach(item => {
+            if (item.tableName && item.fkName) {
+              tableNames.push(item.tableName);
+              fkNames.push(item.fkName);
+            }
+          });
+          genTable.subTableNames = tableNames.join(',');
+          genTable.subTableFkNames = fkNames.join(',');
+          
+          // 兼容原有单子表配置（使用第一个子表）
+          if (tableNames.length > 0) {
+            genTable.subTableName = tableNames[0];
+            genTable.subTableFkName = fkNames[0];
+          }
+        } else {
+          // 单子表模式
+          // 确保多子表字段为空
+          genTable.subTableNames = genTable.subTableName ? genTable.subTableName : '';
+          genTable.subTableFkNames = genTable.subTableFkName ? genTable.subTableFkName : '';
+        }
+        console.log('多子表配置：', subTableConfigs);
+        console.log('单子表配置：',genTable.subTableNames)
+
+      }
+      
       updateGenTable(genTable).then(res => {
         proxy.$modal.msgSuccess(res.msg)
         if (res.code === 200) {
           close()
+        }
+      }).catch(error => {
+        // 将后端验证错误转换为消息提示
+        if (error && error.message) {
+          proxy.$modal.msgError(error.message)
+        } else {
+          proxy.$modal.msgError("保存失败，请稍后重试")
         }
       })
     } else {
@@ -174,7 +223,19 @@ function getFormPromise(form) {
 }
 
 function close() {
-  const obj = { path: "/tool/gen", query: { t: Date.now(), pageNum: route.query.pageNum } }
+  // 优化：确保正确传递所有分页参数，避免重复请求
+  // 如果没有分页参数，则使用默认值
+  const pageNum = route.query.pageNum ? Number(route.query.pageNum) : 1
+  const pageSize = route.query.pageSize ? Number(route.query.pageSize) : 10
+  
+  const obj = { 
+    path: "/tool/gen", 
+    query: { 
+      t: Date.now(), 
+      pageNum: pageNum,
+      pageSize: pageSize
+    } 
+  }
   proxy.$tab.closeOpenPage(obj)
 }
 
@@ -186,6 +247,30 @@ function close() {
       columns.value = res.data.rows
       info.value = res.data.info
       tables.value = res.data.tables
+      
+      // 添加多子表配置字段（如果不存在）
+      if (!info.value.subTableNames) {
+        info.value.subTableNames = '';
+      }
+      if (!info.value.subTableFkNames) {
+        info.value.subTableFkNames = '';
+      }
+      console.log('info.value:',info.value);
+      console.log('info.subTableType:',info.value.subTableType);
+      // 添加subTableType字段（如果不存在）
+      if (info.value.subTableType === undefined || info.value.subTableType === null) {
+        // 根据是否存在多个子表来判断subTableType的默认值
+        if (info.value.subTableNames && info.value.subTableNames.includes(',')) {
+          info.value.subTableType = 2; // 多子表模式
+        } else {
+          info.value.subTableType = 1; // 单子表模式
+        }
+      }
+      
+      // 强制触发响应式更新
+      nextTick(() => {
+        info.value = { ...info.value };
+      });
     })
     /** 查询字典下拉列表 */
     getDictOptionselect().then(response => {
@@ -193,6 +278,49 @@ function close() {
     })
   }
 })()
+
+// 修复：确保在组件激活时不会重复请求数据
+onActivated(() => {
+  // 不需要在这里做任何事情，数据已经在初始化时加载
+  // 除非是第一次加载或者需要刷新数据
+  if ((!info.value || !info.value.tableId) && route.params && route.params.tableId) {
+    const tableId = route.params.tableId
+    // 获取表详细信息
+    getGenTable(tableId).then(res => {
+      columns.value = res.data.rows
+      info.value = res.data.info
+      tables.value = res.data.tables
+      
+      // 添加多子表配置字段（如果不存在）
+      if (!info.value.subTableNames) {
+        info.value.subTableNames = '';
+      }
+      if (!info.value.subTableFkNames) {
+        info.value.subTableFkNames = '';
+      }
+      console.log('info.value:',info.value);
+      console.log('info.subTableType:',info.value.subTableType);
+      // 添加subTableType字段（如果不存在）
+      if (info.value.subTableType === undefined || info.value.subTableType === null) {
+        // 根据是否存在多个子表来判断subTableType的默认值
+        if (info.value.subTableNames && info.value.subTableNames.includes(',')) {
+          info.value.subTableType = 2; // 多子表模式
+        } else {
+          info.value.subTableType = 1; // 单子表模式
+        }
+      }
+      
+      // 强制触发响应式更新
+      nextTick(() => {
+        info.value = { ...info.value };
+      });
+    })
+    /** 查询字典下拉列表 */
+    getDictOptionselect().then(response => {
+      dictOptions.value = response.data
+    })
+  }
+})
 
 // 拖动排序
 onMounted(() => {

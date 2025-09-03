@@ -192,42 +192,95 @@
     <template v-if="info.tplCategory == 'sub'">
       <h4 class="form-header">关联信息</h4>
       <el-row>
-        <el-col :span="12">
-          <el-form-item>
-            <template #label>
-              关联子表的表名
-              <el-tooltip content="关联子表的表名， 如：sys_user" placement="top">
-                <el-icon><question-filled /></el-icon>
-              </el-tooltip>
-            </template>
-            <el-select v-model="info.subTableName" placeholder="请选择" @change="subSelectChange">
-              <el-option
-                v-for="(table, index) in tables"
-                :key="index"
-                :label="table.tableName + '：' + table.tableComment"
-                :value="table.tableName"
-              ></el-option>
-            </el-select>
+        <!-- 添加配置模式开关 -->
+        <el-col :span="24">
+          <el-form-item label="配置模式">
+            <el-radio-group v-model="subTableMode" @change="handleSubTableModeChange">
+              <el-radio :label="1">单子表(1对1)</el-radio>
+              <el-radio :label="2">多子表(1对多)</el-radio>
+            </el-radio-group>
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item>
-            <template #label>
-              子表关联的外键名
-              <el-tooltip content="子表关联的外键名， 如：user_id" placement="top">
-                <el-icon><question-filled /></el-icon>
-              </el-tooltip>
-            </template>
-            <el-select v-model="info.subTableFkName" placeholder="请选择">
-              <el-option
-                v-for="(column, index) in subColumns"
-                :key="index"
-                :label="column.columnName + '：' + column.columnComment"
-                :value="column.columnName"
-              ></el-option>
-            </el-select>
-          </el-form-item>
-        </el-col>
+        
+        <!-- 单子表配置区域 -->
+        <template v-if="subTableMode === 1">
+          <el-col :span="12">
+            <el-form-item>
+              <template #label>
+                关联子表的表名
+                <el-tooltip content="关联子表的表名， 如：sys_user" placement="top">
+                  <el-icon><question-filled /></el-icon>
+                </el-tooltip>
+              </template>
+              <el-select v-model="info.subTableName" placeholder="请选择" @change="subSelectChange">
+                <el-option
+                  v-for="(table, index) in tables"
+                  :key="index"
+                  :label="table.tableName + '：' + table.tableComment"
+                  :value="table.tableName"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item>
+              <template #label>
+                子表关联的外键名
+                <el-tooltip content="子表关联的外键名， 如：user_id" placement="top">
+                  <el-icon><question-filled /></el-icon>
+                </el-tooltip>
+              </template>
+              <el-select v-model="info.subTableFkName" placeholder="请选择">
+                <el-option
+                  v-for="(column, index) in subColumns"
+                  :key="index"
+                  :label="column.columnName + '：' + column.columnComment"
+                  :value="column.columnName"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </template>
+        
+        <!-- 多子表配置区域 -->
+        <template v-if="subTableMode === 2">
+          <el-col :span="24">
+            <el-divider>多子表配置</el-divider>
+            <el-button type="primary" @click="addSubTableConfig">添加子表</el-button>
+            <el-table :data="subTableConfigs" style="width: 100%; margin-top: 10px;">
+              <el-table-column label="序号" type="index" width="50"></el-table-column>
+              <el-table-column label="关联子表的表名">
+                <template #default="scope">
+                  <el-select v-model="scope.row.tableName" placeholder="请选择子表" @change="subTableChange(scope.row)">
+                    <el-option
+                      v-for="(table, index) in tables"
+                      :key="index"
+                      :label="table.tableName + '：' + table.tableComment"
+                      :value="table.tableName">
+                    </el-option>
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="子表关联的外键名">
+                <template #default="scope">
+                  <el-select v-model="scope.row.fkName" placeholder="请选择外键">
+                    <el-option
+                      v-for="(column, index) in scope.row.columns"
+                      :key="index"
+                      :label="column.columnName + '：' + column.columnComment"
+                      :value="column.columnName">
+                    </el-option>
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="80">
+                <template #default="scope">
+                  <el-button type="danger" :icon="Delete" circle @click="removeSubTableConfig(scope.$index)"></el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-col>
+        </template>
       </el-row>
     </template>
 
@@ -236,9 +289,12 @@
 
 <script setup>
 import { listMenu } from "@/api/system/menu"
+import { Delete } from '@element-plus/icons-vue'
+import { nextTick } from 'vue'
 
 const subColumns = ref([])
 const menuOptions = ref([])
+const subTableConfigs = ref([]) // 多个子表配置
 const { proxy } = getCurrentInstance()
 
 const props = defineProps({
@@ -252,6 +308,8 @@ const props = defineProps({
   }
 })
 
+const subTableMode = ref(1) // 1: 单子表模式, 2: 多子表模式
+
 // 表单校验
 const rules = ref({
   tplCategory: [{ required: true, message: "请选择生成模板", trigger: "blur" }],
@@ -262,13 +320,88 @@ const rules = ref({
 })
 
 function subSelectChange(value) {
-  props.info.subTableFkName = ""
+  // 清空现有的子表配置
+  subTableConfigs.value = []
 }
+
+// 处理配置模式切换
+function handleSubTableModeChange(value) {
+  if (value === 1) {
+    // 切换到单子表模式，清空多子表配置
+    subTableConfigs.value = []
+    // 如果有多子表数据，将第一个子表数据填充到单子表配置中
+    if (props.info.subTableNames && props.info.subTableFkNames) {
+      const tableNames = props.info.subTableNames.split(',')
+      const fkNames = props.info.subTableFkNames.split(',')
+      if (tableNames.length > 0 && fkNames.length > 0 && tableNames[0] !== '' && fkNames[0] !== '') {
+        props.info.subTableName = tableNames[0]
+        props.info.subTableFkName = fkNames[0]
+      }
+    }
+  } else {
+    // 切换到多子表模式，清空单子表配置
+    props.info.subTableName = ''
+    props.info.subTableFkName = ''
+    // 初始化多子表配置
+    initializeSubTableConfigs()
+  }
+  
+  // 更新subTableType字段
+  props.info.subTableType = value
+}
+
+// 添加子表配置
+function addSubTableConfig() {
+  subTableConfigs.value.push({
+    tableName: '',
+    fkName: '',
+    columns: []
+  });
+}
+
+// 删除子表配置
+function removeSubTableConfig(index) {
+  subTableConfigs.value.splice(index, 1);
+}
+
+// 子表更改时更新列信息
+function subTableChange(row) {
+  // 清空外键选择
+  row.fkName = '';
+  
+  // 更新列信息
+  for (let i = 0; i < props.tables.length; i++) {
+    if (props.tables[i].tableName === row.tableName) {
+      row.columns = props.tables[i].columns;
+      break;
+    }
+  }
+}
+
+// 监听子表配置变化，更新info中的subTableNames和subTableFkNames
+watch(subTableConfigs, (newVal) => {
+  // 只在多子表模式下更新
+  if (subTableMode.value === 2) {
+    // 更新info中的subTableNames和subTableFkNames
+    let tableNames = [];
+    let fkNames = [];
+    newVal.forEach(item => {
+      if (item.tableName && item.fkName) {
+        tableNames.push(item.tableName);
+        fkNames.push(item.fkName);
+      }
+    });
+    props.info.subTableNames = tableNames.join(',');
+    props.info.subTableFkNames = fkNames.join(',');
+  }
+}, { deep: true })
 
 function tplSelectChange(value) {
   if (value !== "sub") {
     props.info.subTableName = ""
     props.info.subTableFkName = ""
+    // 清理多子表配置
+    subTableConfigs.value = []
   }
 }
 
@@ -291,7 +424,97 @@ function getMenuTreeselect() {
 
 onMounted(() => {
   getMenuTreeselect()
+  
+  // 初始化配置模式
+  initializeSubTableMode()
 })
+
+// 监听info变化，确保在数据加载后正确初始化
+watch(() => props.info, (newInfo) => {
+  if (newInfo && newInfo.tplCategory === 'sub') {
+    // 延迟执行以确保数据完全加载
+    nextTick(() => {
+      initializeSubTableMode()
+    })
+  }
+}, { immediate: true, deep: true })
+
+// 初始化配置模式
+function initializeSubTableMode() {
+  // 确保info数据存在
+  if (!props.info || props.info.tplCategory !== 'sub') {
+    subTableMode.value = 1
+    return
+  }
+  
+  // 根据subTableType字段初始化配置模式（如果存在）
+  if (props.info.subTableType !== undefined && props.info.subTableType !== null) {
+    subTableMode.value = props.info.subTableType
+  } else {
+    // 检查是否存在多子表配置数据（多个子表）
+    if (props.info.subTableNames && props.info.subTableFkNames) {
+      const tableNames = props.info.subTableNames.split(',')
+      const fkNames = props.info.subTableFkNames.split(',')
+      
+      // 如果有多个子表配置，则使用多子表模式
+      if (tableNames.length > 1 && fkNames.length > 1 && tableNames[0] !== '' && fkNames[0] !== '') {
+        subTableMode.value = 2
+      } else {
+        // 否则使用单子表模式
+        subTableMode.value = 1
+      }
+    } else {
+      // 默认使用单子表模式
+      subTableMode.value = 1
+    }
+  }
+  
+  // 根据模式初始化子表配置
+  if (subTableMode.value === 2) {
+    // 初始化多子表配置
+    nextTick(() => {
+      initializeSubTableConfigs()
+    })
+  }
+  
+  // 强制触发响应式更新
+  nextTick(() => {
+    // 通过触发handleSubTableModeChange来确保界面更新
+    handleSubTableModeChange(subTableMode.value)
+  })
+}
+
+// 初始化多子表配置
+function initializeSubTableConfigs() {
+  // 确保在多子表模式下且数据存在
+  if (subTableMode.value !== 2 || !props.info || !props.tables) {
+    return
+  }
+  
+  // 清空现有配置
+  subTableConfigs.value = []
+  
+  // 从逗号分隔的字符串中解析多子表配置
+  if (props.info.subTableNames && props.info.subTableFkNames) {
+    const tableNames = props.info.subTableNames.split(',')
+    const fkNames = props.info.subTableFkNames.split(',')
+    
+    // 创建配置项
+    for (let i = 0; i < tableNames.length; i++) {
+      if (tableNames[i] && fkNames[i] && tableNames[i] !== '' && fkNames[i] !== '') {
+        // 获取子表的列信息
+        const table = props.tables.find(t => t.tableName === tableNames[i])
+        if (table) {
+          subTableConfigs.value.push({
+            tableName: tableNames[i],
+            fkName: fkNames[i],
+            columns: table.columns || []
+          })
+        }
+      }
+    }
+  }
+}
 
 watch(() => props.info.subTableName, val => {
   setSubTableColumns(val)
@@ -300,6 +523,13 @@ watch(() => props.info.subTableName, val => {
 watch(() => props.info.tplWebType, val => {
   if (val === '') {
     props.info.tplWebType = "element-plus"
+  }
+})
+
+// 在组件中暴露方法，用于获取多子表配置信息
+defineExpose({
+  getSubTableConfigs: () => {
+    return subTableConfigs.value
   }
 })
 </script>
