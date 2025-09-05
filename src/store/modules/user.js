@@ -5,19 +5,31 @@ import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { isHttp, isEmpty } from "@/utils/validate"
 import defAva from '@/assets/images/profile.jpg'
+import { getMyTask } from '@/api/homeInfo'
+import { getPostInfo } from '@/api/system/post'
 
 const useUserStore = defineStore(
   'user',
   {
     state: () => ({
       token: getToken(),
-      id: '',
+      id: '', // 用户id
       name: '',
       nickName: '',
       avatar: '',
-      roles: [],
-      permissions: []
+      roles: [],// 角色
+      permissions: [],
+      user: {}, // 用户信息
+      posts: [], // 岗位信息
+      postNames: [], // 岗位名称列表
+      dept:{}, // 部门信息
+      myTask:{
+        total:0,
+        list:[]
+      }, //我的代信息。
     }),
+   
+    
     actions: {
       // 登录
       login(userInfo) {
@@ -47,6 +59,7 @@ const useUserStore = defineStore(
             if (res.roles && res.roles.length > 0) { // 验证返回的roles是否是一个非空数组
               this.roles = res.roles
               this.permissions = res.permissions
+              this.user = res.user
             } else {
               this.roles = ['ROLE_DEFAULT']
             }
@@ -72,6 +85,18 @@ const useUserStore = defineStore(
           })
         })
       },
+      // 获取岗位信息
+      getPostInfo() {
+        return new Promise((resolve, reject) => {
+          getPostInfo(this.id).then(res => {
+            this.postNames = res.postNames || []
+            this.posts = res.posts || []
+            resolve(res)
+          }).catch(error => {
+            reject(error)
+          })
+        })
+      },
       // 退出系统
       logOut() {
         return new Promise((resolve, reject) => {
@@ -79,7 +104,20 @@ const useUserStore = defineStore(
             this.token = ''
             this.roles = []
             this.permissions = []
+            this.posts = []
+            this.postNames = []
             removeToken()
+            resolve()
+          }).catch(error => {
+            reject(error)
+          })
+        })
+      },
+      // 获取我的任务表数据
+      getMyTask(){
+        return new Promise((resolve, reject) => {
+          getMyTask(this.user.userId).then(res => {
+            this.myTask = res.data
             resolve()
           }).catch(error => {
             reject(error)

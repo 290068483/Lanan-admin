@@ -42,3 +42,11 @@ export function delPost(postId) {
     method: 'delete'
   })
 }
+
+// 获取岗位信息
+export function getPostInfo() {
+  return request({
+    url: '/getPostInfo',
+    method: 'get'
+  })
+}

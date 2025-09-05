@@ -23,23 +23,25 @@
           <el-col :md="4" :sm="24">
             <div class="user-details">
               <div class="user-avatar">
-                {{
-                  userInfo.avatar
-                    ? ""
-                    : userInfo.name
-                    ? userInfo.name.charAt(0)
-                    : "U"
-                }}
+                <img :src="userStore.avatar || '/default-avatar.png'" alt="用户头像" />
               </div>
               <div class="user-text">
                 <div class="user-info-grid">
                   <div class="info-label">姓名：</div>
-                  <div class="info-value">{{ userInfo.name }}</div>
+                  <div class="info-value">{{ userStore.name }}</div>
+                </div>
+                <div class="user-info-grid">
+                  <div class="info-label">部门：</div>
+                  <div class="info-value">{{ userStore.user?.dept?.deptName || '未设置' }}</div>
+                </div>
+                <div class="user-info-grid">
+                  <div class="info-label">职位：</div>
+                  <div class="info-value">{{ userStore.postNames?.join(', ') || '未设置' }}</div>
                 </div>
               </div>
             </div>
           </el-col>
-          <el-col :md="16" :sm="24" >
+          <el-col :md="16" :sm="24">
             <div class="welcome-section">
               <h1 class="welcome-title">欢迎进入九素工作台</h1>
               <div class="date-info">
@@ -50,13 +52,33 @@
               </div>
             </div>
           </el-col>
-          <el-col :sm="24" :md="4" clas="last-col-right">
-            <div class="todo-reminder " @click="handleTodoReminderClick">
+          <el-col :sm="24" :md="4" class="last-col-right">
+            <div class="todo-reminder" @click="handleTodoReminderClick">
               <i class="el-icon-time reminder-icon"></i>
               请及时录入工作进度
             </div>
           </el-col>
         </el-row>
+      </div>
+
+      <!-- 部门信息展示区域 -->
+      <div class="dept-info-area" v-if="deptList.length > 0">
+        <el-card class="dept-info-card">
+          <template #header>
+            <div class="clearfix">
+              <span>{{ userStore?.user?.deptName }}</span>
+            </div>
+          </template>
+          <div class="dept-tree">
+            <el-tree
+              :data="deptList"
+              :props="deptProps"
+              node-key="deptId"
+              default-expand-all
+              :expand-on-click-node="false"
+            />
+          </div>
+        </el-card>
       </div>
 
       <!-- 通知和待办区域 -->
@@ -226,38 +248,40 @@ const notifications = ref([
   },
 ]);
 
+// 部门信息相关
+const deptList = ref([]);
+const deptProps = ref({
+  children: 'children',
+  label: 'deptName',
+  value: 'deptId'
+});
+
 // 初始化状态管理实例
 const userStore = useUserStore();
 
-// 组件挂载后初始化逻辑
-onMounted(async () => {
-  try {
-    // 有Token时尝试获取用户信息，失败则提示网络问题
-    if (userStore.token) {
-      try {
-        await userStore.getInfo();
-        console.log("用户信息获取成功:", userStore.$state);
-      } catch (error) {
-        console.warn("🔍 获取用户信息失败，使用本地数据:", error);
-        hasNetworkError.value = true;
-      }
-    }
-  } catch (error) {
-    console.error("🚨 初始化失败:", error);
-    hasNetworkError.value = true;
-  }
+// 在组件挂载时获取岗位信息
+onMounted(() => {
+  // 获取岗位信息
+  userStore.getPostInfo().then(() => {
+    console.log("岗位信息获取成功");
+  }).catch((error) => {
+    console.error("获取岗位信息失败:", error);
+  });
 });
 
-// 计算属性：用户信息（从状态管理获取，无数据时显示默认值）
-const userInfo = computed(() => {
-  const userDetail = userStore.$state;
-  return {
-    name: userDetail.nickName || userDetail.name || "未设置",
-    position: "未设置",
-    department: "未设置",
-    avatar: userDetail.avatar || "",
-  };
-});
+// // 计算属性：用户信息（从状态管理获取，无数据时显示默认值）
+// const userInfo = computed(() => {
+//   // 从用户状态管理中获取用户信息
+//   const userDetail = userStore;
+//   console.log("用户详情:", userDetail);
+//   return {
+//     name: userDetail.nickName || userDetail.name || "未设置",
+//     position: "设计师/销售",
+//     deptName: (userDetail.user && userDetail.user.dept && userDetail.user.dept.deptName) || "未设置",
+//     avatar: userDetail.avatar || "",
+//     roles: userDetail.roles && userDetail.roles.length > 0 ? userDetail.roles[0] : "未设置"
+//   };
+// });
 
 // 计算属性：日期、时间、农历、星期（使用parseTime生成）
 const getDate = computed(() => parseTime(new Date(), "{y}-{m}-{d}"));
@@ -265,6 +289,20 @@ const getLunarDate = computed(() => "农历日期");
 const getWeekday = computed(() => parseTime(new Date(), "星期{a}"));
 const getTime = computed(() => parseTime(new Date(), "{h}:{i}:{s}"));
 
+// 我的待处理事项
+function handleMyTasks(){
+  /**
+   * 1.挂载时请求我的代办接口
+   * 2mounted  -> getPend/ueserId
+   * 3.set state -> paddingData
+   * 4.render ->paddingData
+   * 
+   */
+  userStore.getTask().then((res) => {
+    console.log("我的待处理事项:", res);
+    data1.value.data = res;
+  });
+}
 // 表格数据
 const data1 = ref({
   title: "本人待处理的所有事项",
@@ -368,15 +406,17 @@ const sortBy = (column) => {
 .user-avatar {
   width: 48px;
   height: 48px;
-  background-color: #3b82f6;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  border: 1px solid #bfdbfe;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  background-color: #f3f4f6;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .user-info-grid {
@@ -656,5 +696,24 @@ const sortBy = (column) => {
   .quick-info {
     justify-content: center;
   }
+}
+
+.dept-info-area {
+  margin: 16px 0;
+}
+
+.dept-info-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.dept-tree {
+  padding: 16px 0;
+}
+
+.clearfix {
+  font-weight: 600;
+  color: #374151;
 }
 </style>
