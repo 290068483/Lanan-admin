@@ -2,13 +2,15 @@ import { createApp } from 'vue'
 
 import Cookies from 'js-cookie'
 
-import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
-import locale from 'element-plus/es/locale/lang/zh-cn'
 
+// svg图标
+import 'virtual:svg-icons-register'
 import '@/assets/styles/index.scss' // global css
 
+import ElementPlus from 'element-plus'
+import locale from 'element-plus/es/locale/lang/zh-cn'
 import App from './App'
 import store from './store'
 import router from './router'
@@ -18,8 +20,6 @@ import directive from './directive' // directive
 import plugins from './plugins' // plugins
 import { download } from '@/utils/request'
 
-// svg图标
-import 'virtual:svg-icons-register'
 import SvgIcon from '@/components/SvgIcon'
 import elementIcons from '@/components/SvgIcon/svgicon'
 
@@ -43,6 +43,8 @@ import ImageUpload from "@/components/ImageUpload"
 import ImagePreview from "@/components/ImagePreview"
 // 字典标签组件
 import DictTag from '@/components/DictTag'
+// 全局模态框组件
+import CommonDialog from '@/components/CommonDialog'
 
 const app = createApp(App)
 
@@ -65,6 +67,7 @@ app.component('ImageUpload', ImageUpload)
 app.component('ImagePreview', ImagePreview)
 app.component('RightToolbar', RightToolbar)
 app.component('Editor', Editor)
+app.component('CommonDialog', CommonDialog)
 
 app.use(router)
 app.use(store)

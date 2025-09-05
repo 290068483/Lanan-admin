@@ -5,7 +5,7 @@ import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { isHttp, isEmpty } from "@/utils/validate"
 import defAva from '@/assets/images/profile.jpg'
-import { getMyTask } from '@/api/homeInfo'
+import {  listPendingEvents } from '@/api/homeInfo'
 import { getPostInfo } from '@/api/system/post'
 
 const useUserStore = defineStore(
@@ -27,6 +27,10 @@ const useUserStore = defineStore(
         total:0,
         list:[]
       }, //我的代信息。
+      pendingEvents: {
+        total: 0,
+        list: []
+      } // 待处理事件信息
     }),
    
     
@@ -88,7 +92,7 @@ const useUserStore = defineStore(
       // 获取岗位信息
       getPostInfo() {
         return new Promise((resolve, reject) => {
-          getPostInfo(this.id).then(res => {
+          getPostInfo().then(res => {
             this.postNames = res.postNames || []
             this.posts = res.posts || []
             resolve(res)
@@ -106,6 +110,10 @@ const useUserStore = defineStore(
             this.permissions = []
             this.posts = []
             this.postNames = []
+            this.pendingEvents = {
+              total: 0,
+              list: []
+            }
             removeToken()
             resolve()
           }).catch(error => {
@@ -113,12 +121,26 @@ const useUserStore = defineStore(
           })
         })
       },
-      // 获取我的任务表数据
-      getMyTask(){
+      // // 获取我的任务表数据
+      // getMyTask(){
+      //   return new Promise((resolve, reject) => {
+      //     getMyTask(this.user.userId).then(res => {
+      //       this.myTask = res.data
+      //       resolve()
+      //     }).catch(error => {
+      //       reject(error)
+      //     })
+      //   })
+      // },
+      // 获取待处理事件列表
+      getPendingEvents(query) {
         return new Promise((resolve, reject) => {
-          getMyTask(this.user.userId).then(res => {
-            this.myTask = res.data
-            resolve()
+          listPendingEvents(query).then(res => {
+            this.pendingEvents = {
+              total: res.total,
+              list: res.rows || []
+            }
+            resolve(res)
           }).catch(error => {
             reject(error)
           })

@@ -111,17 +111,19 @@
       </div>
 
       <!-- 快捷信息区域 -->
-      <div class="quick-info">
+      <div class="quick-info" >
         <div
           v-for="(card, index) in quickInfoCards"
           :key="index"
           class="info-card"
           :class="card.bgColor"
+          @click="handleCardClick(card, index)"
         >
           <i class="el-icon-document card-icon"></i>
           <h3 class="card-title">
-            今日待处理事件<span class="card-unit">条</span>
+            {{ card.title }}<span class="card-unit">{{ card.count }}条</span>
           </h3>
+          <div class="card-count" >{{ card.count }}</div>
         </div>
         <div class="button-container">
           <el-button type="primary" size="medium" @click="handleButtonClick"
@@ -146,7 +148,8 @@
               style="width: 100%"
               stripe
               border
-              :default-sort="{ prop: 'id', order: 'descending' }"
+              :default-sort="{ prop: 'id', order: 'descending' }
+"
               @sort-change="sortBy"
               class="data-table"
             >
@@ -187,7 +190,8 @@
               style="width: 100%"
               stripe
               border
-              :default-sort="{ prop: 'id', order: 'descending' }"
+              :default-sort="{ prop: 'id', order: 'descending' }
+"
               @sort-change="sortBy"
               class="data-table"
             >
@@ -214,13 +218,62 @@
           </div>
         </div>
       </div>
+      
+      <!-- 今日待处理事件详情模态框 -->
+      <CommonDialog
+        v-model="dialogVisible"
+        :title="dialogTitle"
+        width="80%"
+        :destroy-on-close="true"
+        @confirm="handleDialogConfirm"
+        @cancel="handleDialogCancel"
+      >
+        <el-table
+          :data="dialogTableData"
+          style="width: 100%"
+          stripe
+          border
+          max-height="400"
+        >
+          <el-table-column
+            prop="eventId"
+            label="事件ID"
+            width="80"
+            align="center"
+          ></el-table-column>
+          <el-table-column
+            prop="eventType"
+            label="事件类型"
+            width="120"
+            align="center"
+          ></el-table-column>
+          <el-table-column
+            prop="eventContent"
+            label="事件内容"
+            :width="300"
+            align="left"
+          ></el-table-column>
+          <el-table-column
+            prop="status"
+            label="状态"
+            width="80"
+            align="center"
+          ></el-table-column>
+          <el-table-column
+            prop="createTime"
+            label="创建时间"
+            width="160"
+            align="center"
+          ></el-table-column>
+        </el-table>
+      </CommonDialog>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElDialog } from "element-plus";
 import useUserStore from "@/store/modules/user";
 import { parseTime } from "@/utils/ruoyi";
 
@@ -259,7 +312,12 @@ const deptProps = ref({
 // 初始化状态管理实例
 const userStore = useUserStore();
 
-// 在组件挂载时获取岗位信息
+// 模态框相关状态
+const dialogVisible = ref(false);
+const dialogTitle = ref("今日待处理事件详情");
+const dialogTableData = ref([]);
+
+// 在组件挂载时获取岗位信息和代办任务信息
 onMounted(() => {
   // 获取岗位信息
   userStore.getPostInfo().then(() => {
@@ -267,21 +325,48 @@ onMounted(() => {
   }).catch((error) => {
     console.error("获取岗位信息失败:", error);
   });
+  
+  // 获取代办任务信息
+  const query = {
+    userId: userStore.id, // 添加用户ID参数
+    status: "0", // 默认查询待处理状态的事件
+    pageNum: 1,
+    pageSize: 10
+  };
+  userStore.getPendingEvents(query).then((res) => {
+    console.log("代办任务信息获取成功");
+    // 更新表格数据
+    data1.value.data = userStore.pendingEvents.list || [];
+    // 更新快捷信息卡片中的待处理事件条数
+    quickInfoCards.value[0].count = userStore.pendingEvents.total || 0;
+  }).catch((error) => {
+    console.error("获取代办任务信息失败:", error);
+  });
 });
 
-// // 计算属性：用户信息（从状态管理获取，无数据时显示默认值）
-// const userInfo = computed(() => {
-//   // 从用户状态管理中获取用户信息
-//   const userDetail = userStore;
-//   console.log("用户详情:", userDetail);
-//   return {
-//     name: userDetail.nickName || userDetail.name || "未设置",
-//     position: "设计师/销售",
-//     deptName: (userDetail.user && userDetail.user.dept && userDetail.user.dept.deptName) || "未设置",
-//     avatar: userDetail.avatar || "",
-//     roles: userDetail.roles && userDetail.roles.length > 0 ? userDetail.roles[0] : "未设置"
-//   };
-// });
+function handleCardClick(row, index){
+  console.log("点击了快捷信息卡片", row, index);
+  
+  // 如果点击的是第一个卡片（今日待处理事件）
+  if (index === 0) {
+    // 显示模态框
+    dialogTitle.value = row.title + "详情";
+    // 确保数据结构与表格列匹配
+    dialogTableData.value = userStore.pendingEvents?.list.map(item => ({
+      eventId: item.eventId || '',
+      eventType: item.eventStatus || '',
+      eventContent: item.eventDetail || '',
+      status: item.eventStatus || '',
+      createTime: item.createTime || ''
+    })) || [];
+    dialogVisible.value = true;
+  }
+}
+
+// 模态框关闭处理
+function handleDialogClose() {
+  dialogTableData.value = [];
+}
 
 // 计算属性：日期、时间、农历、星期（使用parseTime生成）
 const getDate = computed(() => parseTime(new Date(), "{y}-{m}-{d}"));
@@ -289,20 +374,7 @@ const getLunarDate = computed(() => "农历日期");
 const getWeekday = computed(() => parseTime(new Date(), "星期{a}"));
 const getTime = computed(() => parseTime(new Date(), "{h}:{i}:{s}"));
 
-// 我的待处理事项
-function handleMyTasks(){
-  /**
-   * 1.挂载时请求我的代办接口
-   * 2mounted  -> getPend/ueserId
-   * 3.set state -> paddingData
-   * 4.render ->paddingData
-   * 
-   */
-  userStore.getTask().then((res) => {
-    console.log("我的待处理事项:", res);
-    data1.value.data = res;
-  });
-}
+
 // 表格数据
 const data1 = ref({
   title: "本人待处理的所有事项",
@@ -322,9 +394,10 @@ const data2 = ref({
 
 // 快捷信息卡片数据
 const quickInfoCards = ref([
-  { bgColor: "card-blue" },
-  { bgColor: "card-green" },
-  { bgColor: "card-yellow" },
+  { bgColor: "card-blue", count: 0 ,title: "今日待处理事件"},
+  { bgColor: "card-green", count: 0 ,title: "未读消息"},
+  { bgColor: "card-yellow" , count: 0,title: "未完工客户单"},
+  { bgColor: "card-yellow" , count: 0,title: "未完工任务单"},
 ]);
 
 // 处理按钮点击事件
@@ -341,6 +414,16 @@ const handleTodoReminderClick = () => {
 const sortBy = (column) => {
   console.log("排序字段:", column);
 };
+
+// 模态框确认处理
+function handleDialogConfirm() {
+  dialogVisible.value = false
+}
+
+// 模态框取消处理
+function handleDialogCancel() {
+  dialogTableData.value = []
+}
 </script>
 
 <style scoped>
@@ -517,13 +600,7 @@ const sortBy = (column) => {
   transform: translateY(-1px);
 }
 
-.notification-info {
-  /* 信息类通知样式 */
-}
 
-.notification-warning {
-  /* 警告类通知样式 */
-}
 
 .notification-icon {
   flex-shrink: 0;
@@ -607,11 +684,29 @@ const sortBy = (column) => {
   font-size: 20px;
 }
 
+.card-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 .card-title {
   color: white;
   font-size: 14px;
   font-weight: 600;
   margin: 0 0 0 8px;
+  position: relative;
 }
 
 .card-unit {
