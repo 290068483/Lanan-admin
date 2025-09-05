@@ -1,4 +1,4 @@
-<template settup>
+<template>
   <div class="home-container">
     <!-- 网络错误提示 -->
     <div v-if="hasNetworkError" class="network-warning">
@@ -415,9 +415,8 @@ import { ref, onMounted, computed, reactive } from 'vue'
 import { ElMessage, ElDialog } from 'element-plus'
 import useUserStore from '@/store/modules/user'
 import { parseTime } from '@/utils/ruoyi'
-import PendingEventsTable from '@/components/PendingEventsTable/PendingEventsTable.vue'
+import PendingEventsTable from '@/components/PendingEventsTable.vue'
 import CommonDialog from '@/components/CommonDialog.vue'
-
 // 导入API
 import { listUnreadMessages } from '@/api/message'
 import { listUnfinishedCustomerOrders } from '@/api/unfinishedCustomerOrder'
@@ -739,40 +738,6 @@ function handleDialogCancel() {
   dialogTableData.value = []
 }
 
-// 获取状态标签类型
-function getTagType(status) {
-  const statusMap = {
-    待处理: 'info',
-    进行中: 'warning',
-    已完成: 'success',
-    已取消: 'danger',
-  }
-  return statusMap[status] || 'info'
-}
-
-// 获取客户订单状态标签类型
-function getCustomerOrderTagType(status) {
-  const statusMap = {
-    待生产: 'info',
-    生产中: 'warning',
-    已完成: 'success',
-    已取消: 'danger',
-  }
-  return statusMap[status] || 'info'
-}
-
-// 获取任务单状态标签类型
-function getTaskOrderTagType(status) {
-  const statusMap = {
-    待处理: 'info',
-    进行中: 'warning',
-    测试中: '',
-    已完成: 'success',
-    已取消: 'danger',
-  }
-  return statusMap[status] || 'info'
-}
-
 // 获取未读消息列表
 function getUnreadMessages() {
   const query = {
@@ -819,6 +784,40 @@ function getUnfinishedTaskOrders() {
       console.error('获取未完工任务单失败:', error)
       return []
     })
+}
+
+// 获取状态标签类型
+function getTagType(status) {
+  const statusMap = {
+    待处理: 'info',
+    进行中: 'warning',
+    已完成: 'success',
+    已取消: 'danger',
+  }
+  return statusMap[status] || 'info'
+}
+
+// 获取客户订单状态标签类型
+function getCustomerOrderTagType(status) {
+  const statusMap = {
+    待生产: 'info',
+    生产中: 'warning',
+    已完成: 'success',
+    已取消: 'danger',
+  }
+  return statusMap[status] || 'info'
+}
+
+// 获取任务单状态标签类型
+function getTaskOrderTagType(status) {
+  const statusMap = {
+    待处理: 'info',
+    进行中: 'warning',
+    测试中: '',
+    已完成: 'success',
+    已取消: 'danger',
+  }
+  return statusMap[status] || 'info'
 }
 </script>
 

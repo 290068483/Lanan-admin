@@ -1,0 +1,25 @@
+# dependencies
+node_modules
+
+# build output
+dist
+build
+
+# logs
+*.log
+
+# temp files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea
+
+# config files
+.env
+.env.local
+.env.*.local

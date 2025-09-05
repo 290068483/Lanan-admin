@@ -1,4 +1,4 @@
-<template settup>
+<template>
   <div class="home-container">
     <!-- 网络错误提示 -->
     <div v-if="hasNetworkError" class="network-warning">
@@ -262,12 +262,7 @@
                 label="客户名称"
                 width="150"
               ></el-table-column>
-              <el-table-column
-                prop="amount"
-                label="金额"
-                width="100"
-                align="right"
-              >
+              <el-table-column prop="amount" label="金额" width="100" align="right">
                 <template #default="scope"> ¥{{ scope.row.amount }} </template>
               </el-table-column>
               <el-table-column
@@ -393,9 +388,7 @@
           ></el-table-column>
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
-              <el-tag :type="getTagType(scope.row.status)">{{
-                scope.row.status
-              }}</el-tag>
+              <el-tag :type="getTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column
@@ -415,9 +408,8 @@ import { ref, onMounted, computed, reactive } from 'vue'
 import { ElMessage, ElDialog } from 'element-plus'
 import useUserStore from '@/store/modules/user'
 import { parseTime } from '@/utils/ruoyi'
-import PendingEventsTable from '@/components/PendingEventsTable/PendingEventsTable.vue'
+import PendingEventsTable from '@/components/PendingEventsTable.vue'
 import CommonDialog from '@/components/CommonDialog.vue'
-
 // 导入API
 import { listUnreadMessages } from '@/api/message'
 import { listUnfinishedCustomerOrders } from '@/api/unfinishedCustomerOrder'
@@ -460,9 +452,9 @@ const activeTab = ref('')
 const currentTableData = reactive([])
 const currentTabTitle = reactive({
   'pending-events': '今日待处理事件',
-  messages: '未读消息',
-  customers: '未完工客户单',
-  tasks: '未完工任务单',
+  'messages': '未读消息',
+  'customers': '未完工客户单',
+  'tasks': '未完工任务单',
 })
 // 当前类型
 const currentType = {
@@ -513,84 +505,75 @@ onMounted(() => {
 })
 function CurHandleClick(row, index) {
   console.log('表格插槽名字:', activeTab.value, '行数据:', row, '索引:', index)
-
+  
   // 根据当前激活的表格类型处理不同的详情展示
-  switch (activeTab.value) {
+  switch(activeTab.value) {
     case 'pending-events':
       // 今日待办详情
       dialogTitle.value = '今日待处理事件详情'
       // 确保数据结构与表格列匹配
-      dialogTableData.value =
-        userStore.pendingEvents?.list.map(item => ({
-          eventId: item.id || '',
-          eventType: item.taskName || '',
-          eventContent: item.description || '',
-          status: item.status || '',
-          createTime: item.deadline || '',
-        })) || []
+      dialogTableData.value = userStore.pendingEvents?.list.map(item => ({
+        eventId: item.id || '',
+        eventType: item.taskName || '',
+        eventContent: item.description || '',
+        status: item.status || '',
+        createTime: item.deadline || '',
+      })) || []
       dialogVisible.value = true
       break
-
+      
     case 'messages':
       // 未读消息详情
       dialogTitle.value = '未读消息详情'
       // 这里需要根据实际的消息数据结构来映射
-      dialogTableData.value = [
-        {
-          eventId: row.id || '',
-          eventType: row.type || '',
-          eventContent: row.title || '',
-          status: row.status || '',
-          createTime: row.time || '',
-        },
-      ]
+      dialogTableData.value = [{
+        eventId: row.id || '',
+        eventType: row.type || '',
+        eventContent: row.title || '',
+        status: row.status || '',
+        createTime: row.time || '',
+      }]
       dialogVisible.value = true
       break
-
+      
     case 'customers':
       // 未完工客户单详情
       dialogTitle.value = '未完工客户单详情'
       // 这里需要根据实际的客户单数据结构来映射
-      dialogTableData.value = [
-        {
-          eventId: row.id || '',
-          eventType: '客户单',
-          eventContent: row.customerName || '',
-          status: row.status || '',
-          createTime: row.deadline || '',
-        },
-      ]
+      dialogTableData.value = [{
+        eventId: row.id || '',
+        eventType: '客户单',
+        eventContent: row.customerName || '',
+        status: row.status || '',
+        createTime: row.deadline || '',
+      }]
       dialogVisible.value = true
       break
-
+      
     case 'tasks':
       // 未完工任务单详情
       dialogTitle.value = '未完工任务单详情'
       // 这里需要根据实际的任务单数据结构来映射
-      dialogTableData.value = [
-        {
-          eventId: row.id || '',
-          eventType: '任务单',
-          eventContent: row.taskName || '',
-          status: row.status || '',
-          createTime: row.projectName || '',
-        },
-      ]
+      dialogTableData.value = [{
+        eventId: row.id || '',
+        eventType: '任务单',
+        eventContent: row.taskName || '',
+        status: row.status || '',
+        createTime: row.projectName || '',
+      }]
       dialogVisible.value = true
       break
-
+      
     default:
       // 默认处理
       dialogTitle.value = '详情信息'
-      dialogTableData.value = [
-        {
-          eventId: row.id || '',
-          eventType: '',
-          eventContent: row.name || row.title || '',
-          status: row.status || '',
-          createTime: '',
-        },
-      ]
+      dialogTableData.value = [{
+        eventId: row.id || '',
+        eventType: '',
+        eventContent: row.name || row.title || '',
+        status: row.status || '',
+        createTime: '',
+      }]
       dialogVisible.value = true
   }
 }
@@ -607,9 +590,9 @@ function handleSortChange(column) {
 }
 function handleCardClick(row, index) {
   console.log('点击了快捷信息卡片', row, index)
-
+  
   // 根据点击的卡片索引设置对应的表格数据
-  switch (index) {
+  switch(index) {
     case 0:
       // 今日待处理事件
       setTableData(index, userStore.pendingEvents.list)
@@ -739,6 +722,48 @@ function handleDialogCancel() {
   dialogTableData.value = []
 }
 
+// 获取未读消息列表
+function getUnreadMessages() {
+  const query = {
+    pageNum: 1,
+    pageSize: 10,
+  }
+  return listUnreadMessages(query).then(res => {
+    return res.rows || []
+  }).catch(error => {
+    console.error('获取未读消息失败:', error)
+    return []
+  })
+}
+
+// 获取未完工客户单列表
+function getUnfinishedCustomerOrders() {
+  const query = {
+    pageNum: 1,
+    pageSize: 10,
+  }
+  return listUnfinishedCustomerOrders(query).then(res => {
+    return res.rows || []
+  }).catch(error => {
+    console.error('获取未完工客户单失败:', error)
+    return []
+  })
+}
+
+// 获取未完工任务单列表
+function getUnfinishedTaskOrders() {
+  const query = {
+    pageNum: 1,
+    pageSize: 10,
+  }
+  return listUnfinishedTaskOrders(query).then(res => {
+    return res.rows || []
+  }).catch(error => {
+    console.error('获取未完工任务单失败:', error)
+    return []
+  })
+}
+
 // 获取状态标签类型
 function getTagType(status) {
   const statusMap = {
@@ -771,54 +796,6 @@ function getTaskOrderTagType(status) {
     已取消: 'danger',
   }
   return statusMap[status] || 'info'
-}
-
-// 获取未读消息列表
-function getUnreadMessages() {
-  const query = {
-    pageNum: 1,
-    pageSize: 10,
-  }
-  return listUnreadMessages(query)
-    .then(res => {
-      return res.rows || []
-    })
-    .catch(error => {
-      console.error('获取未读消息失败:', error)
-      return []
-    })
-}
-
-// 获取未完工客户单列表
-function getUnfinishedCustomerOrders() {
-  const query = {
-    pageNum: 1,
-    pageSize: 10,
-  }
-  return listUnfinishedCustomerOrders(query)
-    .then(res => {
-      return res.rows || []
-    })
-    .catch(error => {
-      console.error('获取未完工客户单失败:', error)
-      return []
-    })
-}
-
-// 获取未完工任务单列表
-function getUnfinishedTaskOrders() {
-  const query = {
-    pageNum: 1,
-    pageSize: 10,
-  }
-  return listUnfinishedTaskOrders(query)
-    .then(res => {
-      return res.rows || []
-    })
-    .catch(error => {
-      console.error('获取未完工任务单失败:', error)
-      return []
-    })
 }
 </script>
 
@@ -1218,3 +1195,7 @@ function getUnfinishedTaskOrders() {
   color: #374151;
 }
 </style>
+</template>
+
+<script setup>
+</script>
